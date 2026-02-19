@@ -1,76 +1,10 @@
-// ============================================================
-// Dashboard.jsx — Lista cartelle + pulsante "Unisciti"
-// ============================================================
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getFolders, createFolder, deleteFolder } from "../api";
 
-const s = {
-  page: { minHeight: "100vh", background: "var(--bg)", paddingBottom: 60 },
-  header: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "24px 40px", borderBottom: "1px solid var(--border)", background: "var(--surface)",
-  },
-  logo: { fontFamily: "var(--font-display)", fontSize: 24, color: "var(--accent)" },
-  headerRight: { display: "flex", gap: 10 },
-  joinBtn: {
-    background: "var(--surface2)", border: "1px solid var(--border)",
-    color: "var(--text)", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600,
-  },
-  logoutBtn: {
-    background: "var(--surface2)", border: "1px solid var(--border)",
-    color: "var(--muted)", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500,
-  },
-  content: { maxWidth: 900, margin: "0 auto", padding: "48px 24px" },
-  heading: {
-    fontFamily: "var(--font-display)", fontSize: 36, marginBottom: 8,
-    background: "linear-gradient(135deg, var(--text) 0%, var(--accent) 100%)",
-    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-  },
-  sub: { color: "var(--muted)", fontSize: 15, marginBottom: 40 },
-  createBox: { display: "flex", gap: 12, marginBottom: 48 },
-  input: {
-    flex: 1, background: "var(--surface)", border: "1px solid var(--border)",
-    borderRadius: 10, padding: "12px 16px", color: "var(--text)", fontSize: 15, outline: "none",
-  },
-  addBtn: {
-    background: "var(--accent)", color: "#0f0e11", borderRadius: 10,
-    padding: "12px 24px", fontWeight: 600, fontSize: 15, whiteSpace: "nowrap",
-  },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 },
-  card: {
-    background: "var(--surface)", border: "1px solid var(--border)",
-    borderRadius: "var(--radius)", padding: "28px 24px 20px", cursor: "pointer",
-    transition: "border-color 0.2s, transform 0.15s", position: "relative",
-    overflow: "hidden", display: "flex", flexDirection: "column",
-  },
-  accentBar: {
-    position: "absolute", top: 0, left: 0, width: "100%", height: 3,
-    background: "linear-gradient(90deg, var(--accent), var(--accent2))",
-  },
-  folderIcon: { fontSize: 28, marginBottom: 12 },
-  folderName: { fontWeight: 600, fontSize: 16, marginBottom: 4, flex: 1 },
-  folderFooter: { display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16 },
-  folderSub: { color: "var(--muted)", fontSize: 12 },
-  // Badge "condivisa" per le cartelle collaborative
-  sharedBadge: {
-    fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase",
-    background: "var(--surface2)", border: "1px solid var(--border)",
-    borderRadius: 20, padding: "2px 8px", color: "var(--accent)",
-  },
-  deleteBtn: {
-    background: "transparent", border: "none", color: "var(--muted)",
-    fontSize: 15, cursor: "pointer", padding: "2px 4px", borderRadius: 4,
-  },
-  error: { background: "#3a1a20", border: "1px solid #7a2a35", color: "#ff9eb5", borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 24 },
-  empty: { color: "var(--muted)", fontSize: 15, textAlign: "center", padding: "60px 0" },
-};
-
 function getMyUserId() {
   try {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-    const p = JSON.parse(atob(token.split(".")[1]));
+    const p = JSON.parse(atob(localStorage.getItem("token").split(".")[1]));
     return String(p.sub ?? p.user_id ?? p.id ?? p._id ?? "");
   } catch { return null; }
 }
@@ -80,122 +14,185 @@ export default function Dashboard() {
   const [newName, setNewName]   = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(true);
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const navigate = useNavigate();
-  const myUserId = getMyUserId();
+  const [confirmDel, setConfirmDel] = useState(null);
+  const navigate  = useNavigate();
+  const myUserId  = getMyUserId();
 
-  useEffect(() => { loadFolders(); }, []);
+  useEffect(() => { load(); }, []);
 
-  async function loadFolders() {
+  async function load() {
     setLoading(true); setError("");
     try {
-      const data = await getFolders();
-      setFolders(Array.isArray(data) ? data : (data.folders ?? []));
-    } catch (err) { setError(err.message); }
+      const d = await getFolders();
+      setFolders(Array.isArray(d) ? d : (d.folders ?? []));
+    } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }
 
   async function handleCreate(e) {
     e.preventDefault();
     if (!newName.trim()) return;
-    setError("");
-    try {
-      await createFolder(newName.trim());
-      setNewName("");
-      loadFolders();
-    } catch (err) { setError(err.message); }
+    try { await createFolder(newName.trim()); setNewName(""); load(); }
+    catch (e) { setError(e.message); }
   }
 
   async function handleDelete(e, fid) {
     e.stopPropagation();
-    if (confirmDelete !== fid) { setConfirmDelete(fid); return; }
-    try {
-      await deleteFolder(fid);
-      setConfirmDelete(null);
-      setFolders(prev => prev.filter(f => folderId(f) !== fid));
-    } catch (err) { setError(err.message); setConfirmDelete(null); }
+    if (confirmDel !== fid) { setConfirmDel(fid); return; }
+    try { await deleteFolder(fid); setConfirmDel(null); setFolders(p => p.filter(f => fid_(f) !== fid)); }
+    catch (e) { setError(e.message); setConfirmDel(null); }
   }
 
-  function handleLogout() {
-    localStorage.removeItem("token");
-    navigate("/");
-  }
-
-  function folderId(f) { return f._id ?? f.id; }
-
-  function isOwner(f) {
-    return f.members?.some(m => String(m.userId) === myUserId && m.role === "owner");
-  }
-
-  function isShared(f) {
-    return (f.members?.length ?? 0) > 1;
-  }
+  const fid_   = f => f._id ?? f.id;
+  const owned  = f => f.members?.some(m => String(m.userId) === myUserId && m.role === "owner");
+  const shared = f => (f.members?.length ?? 0) > 1;
 
   return (
-    <div style={s.page}>
-      <div style={s.header}>
-        <div style={s.logo}>Flashly</div>
-        <div style={s.headerRight}>
-          {/* Bottone per unirsi a cartella altrui */}
-          <button style={s.joinBtn} onClick={() => navigate("/join")}>
-            🔗 Unisciti a cartella
-          </button>
-          <button style={s.logoutBtn} onClick={handleLogout}>Esci →</button>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      {/* ── Header ── */}
+      <header style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 48px", height: 68,
+        borderBottom: "1px solid var(--border)",
+        background: "var(--surface)",
+        position: "sticky", top: 0, zIndex: 10,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 22, fontWeight: 900, color: "var(--accent)", letterSpacing: "-0.5px" }}>✦</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>Flashly</span>
         </div>
-      </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn-ghost" onClick={() => navigate("/join")} style={{
+            background: "var(--surface2)", border: "1px solid var(--border)",
+            color: "var(--textSub)", borderRadius: "var(--radiusSm)",
+            padding: "9px 18px", fontSize: 14, fontWeight: 600,
+          }}>🔗 Unisciti</button>
+          <button className="btn-ghost" onClick={() => { localStorage.removeItem("token"); navigate("/"); }} style={{
+            background: "transparent", border: "1px solid var(--border)",
+            color: "var(--muted)", borderRadius: "var(--radiusSm)",
+            padding: "9px 18px", fontSize: 14, fontWeight: 600,
+          }}>Esci</button>
+        </div>
+      </header>
 
-      <div className="fade-up" style={s.content}>
-        <h1 style={s.heading}>Le tue cartelle</h1>
-        <p style={s.sub}>Crea una cartella o unisciti a una con il codice invito.</p>
+      <main style={{ maxWidth: 960, margin: "0 auto", padding: "56px 32px" }}>
+        {/* Hero */}
+        <div className="fade-up" style={{ marginBottom: 48 }}>
+          <h1 style={{ fontSize: 40, fontWeight: 900, letterSpacing: "-1px", marginBottom: 8 }}>
+            Le tue cartelle
+          </h1>
+          <p style={{ color: "var(--muted)", fontSize: 17, fontWeight: 500 }}>
+            Crea un mazzo o unisciti con un codice.
+          </p>
+        </div>
 
-        <form style={s.createBox} onSubmit={handleCreate}>
-          <input style={s.input} placeholder="Nome nuova cartella…"
-            value={newName} onChange={e => setNewName(e.target.value)} />
-          <button style={s.addBtn} type="submit">+ Crea</button>
+        {/* Create form */}
+        <form className="fade-up stagger-1" onSubmit={handleCreate} style={{
+          display: "flex", gap: 12, marginBottom: 52,
+        }}>
+          <input
+            className="input-field"
+            style={{
+              flex: 1, background: "var(--surface)", border: "1px solid var(--border)",
+              borderRadius: "var(--radiusSm)", padding: "14px 18px",
+              color: "var(--text)", fontSize: 16, fontWeight: 500, outline: "none",
+              transition: "border-color 0.2s, box-shadow 0.2s",
+            }}
+            placeholder="Nome nuova cartella…"
+            value={newName} onChange={e => setNewName(e.target.value)}
+          />
+          <button className="btn-glow" type="submit" style={{
+            background: "linear-gradient(135deg,var(--accent),#9b59ff)",
+            color: "#fff", borderRadius: "var(--radiusSm)",
+            padding: "14px 28px", fontWeight: 800, fontSize: 15, whiteSpace: "nowrap",
+          }}>+ Crea</button>
         </form>
 
-        {error && <div style={s.error}>⚠ {error}</div>}
+        {error && (
+          <div className="fade-in" style={{
+            background: "rgba(255,80,100,0.1)", border: "1px solid rgba(255,80,100,0.3)",
+            color: "#ff8096", borderRadius: "var(--radiusSm)",
+            padding: "12px 16px", fontSize: 15, marginBottom: 28, fontWeight: 500,
+          }}>⚠ {error}</div>
+        )}
 
         {loading ? (
-          <div style={s.empty}>Caricamento…</div>
+          <div style={{ color: "var(--muted)", textAlign: "center", padding: "80px 0", fontSize: 16 }}>
+            <div style={{ width: 32, height: 32, border: "3px solid var(--border)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+            Caricamento…
+          </div>
         ) : folders.length === 0 ? (
-          <div style={s.empty}>Nessuna cartella ancora.<br />Creane una o unisciti con un codice!</div>
+          <div className="fade-up" style={{
+            textAlign: "center", padding: "80px 0",
+            color: "var(--muted)", fontSize: 17, fontWeight: 500,
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📂</div>
+            Nessuna cartella ancora.<br />Creane una o unisciti con un codice!
+          </div>
         ) : (
-          <div style={s.grid}>
-            {folders.map(folder => {
-              const fid         = folderId(folder);
-              const confirming  = confirmDelete === fid;
-              const owned       = isOwner(folder);
-              const shared      = isShared(folder);
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20 }}>
+            {folders.map((folder, i) => {
+              const fid       = fid_(folder);
+              const confirming = confirmDel === fid;
+              const isOwned   = owned(folder);
+              const isShared  = shared(folder);
 
               return (
-                <div
-                  key={fid}
-                  style={{ ...s.card, borderColor: confirming ? "#7a2a35" : "var(--border)" }}
-                  className="fade-up"
+                <div key={fid}
+                  className={`card-hover fade-up stagger-${Math.min(i+1,5)}`}
                   onClick={() => navigate(`/folders/${fid}`)}
-                  onMouseEnter={e => { if (!confirming) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.transform = "translateY(-2px)"; }}}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = confirming ? "#7a2a35" : "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; if (confirming) setConfirmDelete(null); }}
+                  style={{
+                    background: "var(--surface)", border: `1px solid ${confirming ? "rgba(255,80,100,0.5)" : "var(--border)"}`,
+                    borderRadius: "var(--radius)", padding: "28px 24px 22px",
+                    cursor: "pointer", position: "relative", overflow: "hidden",
+                    display: "flex", flexDirection: "column",
+                  }}
                 >
-                  <div style={s.accentBar} />
-                  <div style={s.folderIcon}>{shared ? "📂" : "📁"}</div>
-                  <div style={s.folderName}>{folder.name}</div>
+                  {/* Top gradient bar */}
+                  <div style={{
+                    position: "absolute", top: 0, left: 0, right: 0, height: 3,
+                    background: isShared
+                      ? "linear-gradient(90deg,var(--accent),var(--accent2))"
+                      : "linear-gradient(90deg,var(--accent),var(--accent3))",
+                  }} />
 
-                  <div style={s.folderFooter}>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      {shared && <span style={s.sharedBadge}>👥 {folder.members.length}</span>}
-                      {!owned && <span style={{ ...s.sharedBadge, color: "var(--muted)" }}>membro</span>}
+                  <div style={{ fontSize: 32, marginBottom: 14 }}>{isShared ? "📂" : "📁"}</div>
+                  <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 6, flex: 1, lineHeight: 1.3 }}>
+                    {folder.name}
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18 }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {isShared && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
+                          textTransform: "uppercase", background: "var(--accentDim)",
+                          border: "1px solid rgba(124,106,255,0.3)",
+                          borderRadius: 20, padding: "3px 10px", color: "var(--accent)",
+                        }}>👥 {folder.members.length}</span>
+                      )}
+                      {!isOwned && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
+                          textTransform: "uppercase", background: "var(--surface3)",
+                          border: "1px solid var(--border)", borderRadius: 20,
+                          padding: "3px 10px", color: "var(--muted)",
+                        }}>membro</span>
+                      )}
                     </div>
 
-                    {/* Solo l'owner può eliminare */}
-                    {owned && (
+                    {isOwned && (
                       <button
-                        style={{ ...s.deleteBtn, color: confirming ? "#ff9eb5" : "var(--muted)" }}
-                        title={confirming ? "Conferma eliminazione" : "Elimina cartella"}
+                        style={{
+                          background: "transparent", border: "none", cursor: "pointer",
+                          padding: "4px 6px", borderRadius: 6, fontSize: 16,
+                          color: confirming ? "#ff8096" : "var(--muted)",
+                          transition: "color 0.15s",
+                        }}
+                        title={confirming ? "Conferma" : "Elimina"}
                         onClick={e => handleDelete(e, fid)}
-                      >
-                        {confirming ? "⚠" : "🗑"}
-                      </button>
+                        onMouseLeave={() => { if (confirmDel === fid) setConfirmDel(null); }}
+                      >{confirming ? "⚠" : "🗑"}</button>
                     )}
                   </div>
                 </div>
@@ -203,7 +200,7 @@ export default function Dashboard() {
             })}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
