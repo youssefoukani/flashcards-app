@@ -1,4 +1,6 @@
 from pymongo import MongoClient
+import os
 
-client = MongoClient("mongodb+srv://youssef:flashcard@clusterflashcards.xujfm3d.mongodb.net/?retryWrites=true&w=majority")
+MONGO_URI = os.getenv("MONGO_URI")
+client = MongoClient(MONGO_URI)
 db = client.flashcards

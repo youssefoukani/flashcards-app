@@ -6,7 +6,9 @@ from routes.folders import folders_bp
 from routes.study import study_bp
 from routes.flashcards import flashcards_bp
 from routes.ai import ai_bp
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)

@@ -3,10 +3,11 @@ from datetime import datetime, timedelta
 import jwt
 import bcrypt
 from bson import ObjectId
+import os
 
 from db import db
 
-SECRET_KEY = "SUPER_SECRET_KEY_CAMBIALA"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
