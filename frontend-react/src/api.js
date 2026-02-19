@@ -43,3 +43,12 @@ export const fetchNextCard = (folderId, recentIds = [], learnedIds = []) =>
 
 export const recordResult = (flashcardId, result) =>
   apiFetch("/study/result", { method: "POST", body: JSON.stringify({ flashcard_id: flashcardId, result }) });
+
+// ── AI Generation ─────────────────────────────────────────────
+// Genera flashcard automaticamente con Groq + Llama 3
+// count: numero di card da generare (default 5, max 10)
+export const generateFlashcards = (folderId, topic, count = 5) =>
+  apiFetch("/ai/generate", {
+    method: "POST",
+    body: JSON.stringify({ folder_id: folderId, topic, count }),
+  });

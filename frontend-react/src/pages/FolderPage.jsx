@@ -7,6 +7,7 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AIGeneratePanel from "./AIGeneratePanel";
 import { getFolderById, getFlashcards, createFlashcard, updateFlashcard, deleteFlashcard } from "../api";
 
 // Estrae user_id dal JWT senza librerie
@@ -268,6 +269,17 @@ export default function FolderPage() {
       <div className="fade-up" style={s.content}>
         {error   && <div style={s.error}>⚠ {error}</div>}
         {success && <div style={s.success}>✓ {success}</div>}
+
+        {/* Pannello generazione AI — visibile a tutti i membri */}
+        {isMember && (
+          <AIGeneratePanel
+            folderId={id}
+            onSaved={(newCards) => {
+              setCards(prev => [...prev, ...newCards]);
+              flash(`✦ ${newCards.length} flashcard AI aggiunte!`);
+            }}
+          />
+        )}
 
         {/* Form aggiunta — solo per i membri */}
         {isMember && (

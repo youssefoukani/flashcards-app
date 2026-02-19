@@ -1,5 +1,5 @@
 // ============================================================
-// App.jsx — Routing completo
+// App.jsx — Routing completo 
 // ============================================================
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage    from "./pages/AuthPage";

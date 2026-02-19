@@ -5,6 +5,7 @@ from routes.auth import auth_bp
 from routes.folders import folders_bp
 from routes.study import study_bp
 from routes.flashcards import flashcards_bp
+from routes.ai import ai_bp
 
 
 def create_app():
@@ -19,6 +20,7 @@ def create_app():
     app.register_blueprint(folders_bp)
     app.register_blueprint(study_bp)
     app.register_blueprint(flashcards_bp)
+    app.register_blueprint(ai_bp)
 
     # ------------------------
     # Health check
