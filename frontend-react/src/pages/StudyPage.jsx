@@ -9,7 +9,9 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getFlashcards } from "../api";
+import { getFlashcards, fetchNextCard, recordResult } from "../api";
+
+const REPEAT_WINDOW = 3; // quante card tenere in memoria per anti-ripetizione
 
 // ── Utility: selezione pesata casuale ───────────────────────
 function weightedRandom(items) {
@@ -42,15 +44,16 @@ const s = {
     color: "var(--muted)",
     borderRadius: 8,
     padding: "8px 14px",
-    fontSize: 13,
+    fontSize: 16,
   },
   headerTitle: {
     fontFamily: "var(--font-display)",
-    fontSize: 20,
+    fontSize: 26,
+    letterSpacing:1,
     color: "var(--accent)",
     flex: 1,
   },
-  stats: { color: "var(--muted)", fontSize: 13 },
+  stats: { color: "var(--muted)", fontSize: 16 },
   center: {
     flex: 1,
     display: "flex",
@@ -112,7 +115,7 @@ const s = {
   }),
   hint: {
     color: "var(--muted)",
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
     marginBottom: 12,
@@ -128,7 +131,7 @@ const s = {
     border: "1px solid #2a6a4a",
     color: "#6be0a0",
     fontWeight: 700,
-    fontSize: 15,
+    fontSize: 16,
     transition: "opacity 0.2s",
   },
   btnDontKnow: {
@@ -138,12 +141,12 @@ const s = {
     border: "1px solid #7a2a35",
     color: "#ff9eb5",
     fontWeight: 700,
-    fontSize: 15,
+    fontSize: 16,
     transition: "opacity 0.2s",
   },
   tapHint: {
     color: "var(--muted)",
-    fontSize: 13,
+    fontSize: 16,
     marginBottom: 20,
   },
   finishedBox: {
@@ -170,40 +173,43 @@ const s = {
 };
 
 export default function StudyPage() {
-  const { id } = useParams();
+  const { id } = useParams();           // folder _id
   const navigate = useNavigate();
 
-  const [deck, setDeck] = useState([]); // [{...card, weight}]
-  const [current, setCurrent] = useState(null);
+  const [totalCards, setTotalCards] = useState(0);  // totale card nella cartella
+  const [current, setCurrent] = useState(null);      // card corrente
   const [flipped, setFlipped] = useState(false);
   const [known, setKnown] = useState(0);
   const [total, setTotal] = useState(0);
+  const [learned, setLearned] = useState([]);        // _id card imparate
+  const [recentIds, setRecentIds] = useState([]);    // finestra anti-ripetizione
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [transitioning, setTransitioning] = useState(false);
 
-  // Numero di round prima di considerare la sessione "finita":
-  // ogni card deve essere segnata "lo so" almeno 1 volta
-  const [learnedSet, setLearnedSet] = useState(new Set());
-
+  // Al mount: conta le card totali e carica la prima
   useEffect(() => {
-    loadCards();
+    initSession();
   }, [id]);
 
-  async function loadCards() {
+  async function initSession() {
     setLoading(true);
+    setError("");
     try {
+      // Conta le card disponibili
       const data = await getFlashcards(id);
-      const list = Array.isArray(data) ? data : data.flashcards ?? [];
+      const list = Array.isArray(data) ? data : (data.flashcards ?? []);
       if (list.length === 0) {
         setError("Nessuna flashcard in questa cartella.");
         setLoading(false);
         return;
       }
-      // Inizializza peso 1 per ogni card
-      const weighted = list.map((c) => ({ ...c, weight: 1 }));
-      setDeck(weighted);
-      setCurrent(weightedRandom(weighted));
+      setTotalCards(list.length);
+
+      // Carica la prima card dall'algoritmo backend
+      const card = await fetchNextCard(id, []);
+      setCurrent(card);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -211,60 +217,77 @@ export default function StudyPage() {
     }
   }
 
-  function nextCard(updatedDeck) {
-    setFlipped(false);
-    // Piccolo timeout per permettere al flip di tornare prima
-    setTimeout(() => setCurrent(weightedRandom(updatedDeck)), 200);
+  // Aggiorna la finestra anti-ripetizione (mantieni ultimi REPEAT_WINDOW id)
+  function updateRecentIds(cardId) {
+    const updated = [...recentIds, cardId].slice(-REPEAT_WINDOW);
+    setRecentIds(updated);
+    return updated;
   }
 
-  function handleKnow() {
-    if (!flipped) return; // deve aver visto il retro
+  async function loadNextCard(newRecentIds) {
+    setTransitioning(true);
+    setFlipped(false);
+    try {
+      const card = await fetchNextCard(id, newRecentIds);
+      setTimeout(() => {
+        setCurrent(card);
+        setTransitioning(false);
+      }, 200);
+    } catch (err) {
+      setError(err.message);
+      setTransitioning(false);
+    }
+  }
+
+  async function handleKnow() {
+    if (!flipped || !current || transitioning) return;
+
+    const cardId = current._id;
+
+    // Registra successo sul backend
+    await recordResult(cardId, "success").catch(() => {});
+
+    // Aggiorna card imparate (senza duplicati)
+    const newLearned = learned.includes(cardId) ? learned : [...learned, cardId];
+    setLearned(newLearned);
     setKnown((k) => k + 1);
     setTotal((t) => t + 1);
 
-    const newLearned = new Set(learnedSet);
-    newLearned.add(current.id);
-    setLearnedSet(newLearned);
-
-    // Abbassa il peso (imparata)
-    const updated = deck.map((c) =>
-      c.id === current.id ? { ...c, weight: Math.max(0.1, c.weight * 0.5) } : c
-    );
-    setDeck(updated);
-
     // Sessione finita quando tutte le card sono state imparate almeno 1 volta
-    if (newLearned.size === deck.length) {
+    if (newLearned.length >= totalCards) {
       setFinished(true);
       return;
     }
 
-    nextCard(updated);
+    const newRecent = updateRecentIds(cardId);
+    await loadNextCard(newRecent);
   }
 
-  function handleDontKnow() {
-    if (!flipped) return;
+  async function handleDontKnow() {
+    if (!flipped || !current || transitioning) return;
+
+    const cardId = current._id;
+
+    // Registra fallimento sul backend
+    await recordResult(cardId, "fail").catch(() => {});
+
     setTotal((t) => t + 1);
 
-    // Alza il peso (non imparata → mostrarla prima)
-    const updated = deck.map((c) =>
-      c.id === current.id ? { ...c, weight: c.weight * 2 } : c
-    );
-    setDeck(updated);
-    nextCard(updated);
+    const newRecent = updateRecentIds(cardId);
+    await loadNextCard(newRecent);
   }
 
-  function handleRestart() {
-    const reset = deck.map((c) => ({ ...c, weight: 1 }));
-    setDeck(reset);
+  async function handleRestart() {
+    setLearned([]);
+    setRecentIds([]);
     setKnown(0);
     setTotal(0);
-    setLearnedSet(new Set());
     setFinished(false);
     setFlipped(false);
-    setCurrent(weightedRandom(reset));
+    await loadNextCard([]);
   }
 
-  const progress = deck.length > 0 ? (learnedSet.size / deck.length) * 100 : 0;
+  const progress = totalCards > 0 ? (learned.length / totalCards) * 100 : 0;
 
   if (loading) {
     return (
@@ -274,24 +297,26 @@ export default function StudyPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div style={{ ...s.page, alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: "#ff9eb5" }}>⚠ {error}</span>
+      </div>
+    );
+  }
+
   return (
     <div style={s.page}>
-      {/* Header */}
       <div style={s.header}>
         <button style={s.backBtn} onClick={() => navigate(`/folders/${id}`)}>
           ← Cartella
         </button>
         <div style={s.headerTitle}>Sessione di studio</div>
-        <div style={s.stats}>
-          ✓ {known} / {total} risposta corretta
-        </div>
+        <div style={s.stats}>✓ {known} / {total} corrette</div>
       </div>
 
       <div style={s.center} className="fade-up">
-        {error ? (
-          <div style={{ color: "#ff9eb5" }}>⚠ {error}</div>
-        ) : finished ? (
-          // ── Schermata completamento ──────────────────────
+        {finished ? (
           <div style={s.finishedBox}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
             <div style={s.finishedTitle}>Sessione completata!</div>
@@ -315,22 +340,23 @@ export default function StudyPage() {
             {/* Barra progresso */}
             <div style={{ width: "100%", maxWidth: 560, marginBottom: 8 }}>
               <span style={s.hint}>
-                Apprese: {learnedSet.size} / {deck.length}
+                Apprese: {learned.length} / {totalCards}
               </span>
             </div>
             <div style={s.progressBar}>
               <div style={s.progressFill(progress)} />
             </div>
 
-            {/* Card con flip */}
-            <div style={s.cardContainer} onClick={() => setFlipped((f) => !f)}>
+            {/* Card flip */}
+            <div
+              style={{ ...s.cardContainer, opacity: transitioning ? 0.4 : 1, transition: "opacity 0.2s" }}
+              onClick={() => !transitioning && setFlipped((f) => !f)}
+            >
               <div style={s.cardInner(flipped)}>
-                {/* Fronte */}
                 <div style={s.cardFace(false)}>
                   <div style={s.hint}>Domanda</div>
                   {current?.front}
                 </div>
-                {/* Retro */}
                 <div style={s.cardFace(true)}>
                   <div style={{ ...s.hint, color: "var(--accent)" }}>Risposta</div>
                   {current?.back}
@@ -342,10 +368,10 @@ export default function StudyPage() {
               <p style={s.tapHint}>Clicca la card per vedere la risposta</p>
             ) : (
               <div style={s.btnRow}>
-                <button style={s.btnDontKnow} onClick={handleDontKnow}>
+                <button style={s.btnDontKnow} onClick={handleDontKnow} disabled={transitioning}>
                   ✗ Non lo sapevo
                 </button>
-                <button style={s.btnKnow} onClick={handleKnow}>
+                <button style={s.btnKnow} onClick={handleKnow} disabled={transitioning}>
                   ✓ Lo sapevo
                 </button>
               </div>

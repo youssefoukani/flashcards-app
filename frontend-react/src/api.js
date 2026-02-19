@@ -74,3 +74,22 @@ export async function createFlashcard(folderId, front, back) {
 export async function deleteFlashcard(cardId) {
   return apiFetch(`/flashcards/${cardId}`, { method: "DELETE" });
 }
+
+// ── Studio avanzato ─────────────────────────────────────────
+
+// Chiede la prossima card all'algoritmo backend
+// recentIds: array degli _id delle ultime card mostrate (anti-ripetizione)
+export async function fetchNextCard(folderId, recentIds = []) {
+  return apiFetch("/study/next", {
+    method: "POST",
+    body: JSON.stringify({ folder_id: folderId, recent_ids: recentIds }),
+  });
+}
+
+// Registra il risultato: result = "success" | "fail"
+export async function recordResult(flashcardId, result) {
+  return apiFetch("/study/result", {
+    method: "POST",
+    body: JSON.stringify({ flashcard_id: flashcardId, result }),
+  });
+}

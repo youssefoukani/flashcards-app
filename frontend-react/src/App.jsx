@@ -27,7 +27,7 @@ export default function App() {
           --text: #ece8f5;
           --muted: #8a8599;
           --radius: 14px;
-          --font-display: 'DM Serif Display', serif;
+          --font-display: 'Montserrat', serif;
           --font-body: 'DM Sans', sans-serif;
         }
 

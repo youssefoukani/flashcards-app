@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getFolders, createFolder, deleteFolder } from "../api";
-
 const s = {
   page: { minHeight: "100vh", background: "var(--bg)", padding: "0 0 60px" },
   header: {
@@ -15,26 +14,26 @@ const s = {
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
   },
-  logo: { fontFamily: "var(--font-display)", fontSize: 24, color: "var(--accent)" },
+  logo: { fontFamily: "Montserrat", fontSize: 35, letterSpacing: 1, color: "var(--accent)" },
   logoutBtn: {
     background: "var(--surface2)",
     border: "1px solid var(--border)",
     color: "var(--muted)",
     borderRadius: 8,
     padding: "8px 16px",
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: 500,
   },
   content: { maxWidth: 900, margin: "0 auto", padding: "48px 24px" },
   heading: {
-    fontFamily: "var(--font-display)",
-    fontSize: 36,
+    fontFamily: "Montserrat",
+    fontSize: 34,
     marginBottom: 8,
     background: "linear-gradient(135deg, var(--text) 0%, var(--accent) 100%)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
   },
-  sub: { color: "var(--muted)", fontSize: 15, marginBottom: 40 },
+  sub: { color: "var(--muted)", fontSize: 20, marginBottom: 40 },
   createBox: { display: "flex", gap: 12, marginBottom: 48 },
   input: {
     flex: 1,
@@ -43,7 +42,7 @@ const s = {
     borderRadius: 10,
     padding: "12px 16px",
     color: "var(--text)",
-    fontSize: 15,
+    fontSize: 18,
     outline: "none",
   },
   addBtn: {
@@ -52,7 +51,7 @@ const s = {
     borderRadius: 10,
     padding: "12px 24px",
     fontWeight: 600,
-    fontSize: 15,
+    fontSize: 18,
     whiteSpace: "nowrap",
   },
   grid: {
@@ -78,20 +77,20 @@ const s = {
     width: "100%", height: 3,
     background: "linear-gradient(90deg, var(--accent), var(--accent2))",
   },
-  folderIcon: { fontSize: 28, marginBottom: 12 },
-  folderName: { fontWeight: 600, fontSize: 16, marginBottom: 4, flex: 1 },
+  folderIcon: { fontSize: 34, marginBottom: 12 },
+  folderName: { fontWeight: 600, fontSize: 20, marginBottom: 4, flex: 1 },
   folderFooter: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 16,
   },
-  folderSub: { color: "var(--muted)", fontSize: 13 },
+  folderSub: { color: "var(--muted)", fontSize: 16 },
   deleteFolderBtn: {
     background: "transparent",
     border: "none",
     color: "var(--muted)",
-    fontSize: 15,
+    fontSize: 18,
     cursor: "pointer",
     padding: "2px 4px",
     borderRadius: 4,
@@ -107,7 +106,7 @@ const s = {
     fontSize: 13,
     marginBottom: 24,
   },
-  empty: { color: "var(--muted)", fontSize: 15, textAlign: "center", padding: "60px 0" },
+  empty: { color: "var(--muted)", fontSize: 16, textAlign: "center", padding: "60px 0" },
 };
 
 export default function Dashboard() {
