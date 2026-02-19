@@ -79,10 +79,10 @@ export async function deleteFlashcard(cardId) {
 
 // Chiede la prossima card all'algoritmo backend
 // recentIds: array degli _id delle ultime card mostrate (anti-ripetizione)
-export async function fetchNextCard(folderId, recentIds = []) {
+export async function fetchNextCard(folderId, recentIds = [], learnedIds = []) {
   return apiFetch("/study/next", {
     method: "POST",
-    body: JSON.stringify({ folder_id: folderId, recent_ids: recentIds }),
+    body: JSON.stringify({ folder_id: folderId, recent_ids: recentIds, learned_ids: learnedIds }),
   });
 }
 

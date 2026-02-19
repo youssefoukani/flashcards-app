@@ -1,11 +1,11 @@
 // ============================================================
-// StudyPage.jsx — Sessione di studio con ripetizione ponderata
-// ============================================================
-// Logica di ripetizione:
-//   - Ogni card ha un "peso" che parte da 1.
-//   - "Non lo so" → peso *= 2 (più probabile rivederla presto)
-//   - "Lo so"     → peso *= 0.5, min 0.1 (meno probabile rivederla subito)
-//   - La prossima card viene scelta con selezione pesata casuale.
+// StudyPage.jsx — Studio con algoritmo pseudocasuale backend
+// Ogni card viene richiesta a POST /study/next che applica:
+//   1. Priorità temporale (lastSeen + failCount)
+//   2. Jitter deterministico per giorno
+//   3. Pseudo-casualità pesata
+//   4. Rotazione anti-pattern (daily salt)
+//   5. Finestra anti-ripetizione (NO_REPEAT_WINDOW card)
 // ============================================================
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -13,16 +13,6 @@ import { getFlashcards, fetchNextCard, recordResult } from "../api";
 
 const REPEAT_WINDOW = 3; // quante card tenere in memoria per anti-ripetizione
 
-// ── Utility: selezione pesata casuale ───────────────────────
-function weightedRandom(items) {
-  const total = items.reduce((sum, item) => sum + item.weight, 0);
-  let r = Math.random() * total;
-  for (const item of items) {
-    r -= item.weight;
-    if (r <= 0) return item;
-  }
-  return items[items.length - 1];
-}
 
 const s = {
   page: {
@@ -208,7 +198,7 @@ export default function StudyPage() {
       setTotalCards(list.length);
 
       // Carica la prima card dall'algoritmo backend
-      const card = await fetchNextCard(id, []);
+      const card = await fetchNextCard(id, [], []);
       setCurrent(card);
     } catch (err) {
       setError(err.message);
@@ -224,11 +214,11 @@ export default function StudyPage() {
     return updated;
   }
 
-  async function loadNextCard(newRecentIds) {
+  async function loadNextCard(newRecentIds, currentLearned) {
     setTransitioning(true);
     setFlipped(false);
     try {
-      const card = await fetchNextCard(id, newRecentIds);
+      const card = await fetchNextCard(id, newRecentIds, currentLearned);
       setTimeout(() => {
         setCurrent(card);
         setTransitioning(false);
@@ -260,7 +250,7 @@ export default function StudyPage() {
     }
 
     const newRecent = updateRecentIds(cardId);
-    await loadNextCard(newRecent);
+    await loadNextCard(newRecent, newLearned);
   }
 
   async function handleDontKnow() {
@@ -274,7 +264,7 @@ export default function StudyPage() {
     setTotal((t) => t + 1);
 
     const newRecent = updateRecentIds(cardId);
-    await loadNextCard(newRecent);
+    await loadNextCard(newRecent, learned);
   }
 
   async function handleRestart() {
@@ -284,7 +274,7 @@ export default function StudyPage() {
     setTotal(0);
     setFinished(false);
     setFlipped(false);
-    await loadNextCard([]);
+    await loadNextCard([], []);
   }
 
   const progress = totalCards > 0 ? (learned.length / totalCards) * 100 : 0;
