@@ -2,7 +2,7 @@
 // AuthPage.jsx — Login e Registrazione
 // ============================================================
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { login, register } from "../api";
 
 const s = {
@@ -24,14 +24,14 @@ const s = {
   },
   logo: {
     fontFamily: "var(--font-display)",
-    fontSize: 40,
+    fontSize: 32,
     color: "var(--accent)",
     marginBottom: 8,
     letterSpacing: "-0.5px",
   },
   subtitle: {
     color: "var(--muted)",
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 36,
   },
   tabs: {
@@ -46,7 +46,7 @@ const s = {
     flex: 1,
     padding: "8px 0",
     borderRadius: 6,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 500,
     background: active ? "var(--accent)" : "transparent",
     color: active ? "#0f0e11" : "var(--muted)",
@@ -54,7 +54,7 @@ const s = {
   }),
   label: {
     display: "block",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 600,
     color: "var(--muted)",
     letterSpacing: "0.08em",
@@ -68,7 +68,7 @@ const s = {
     borderRadius: 8,
     padding: "12px 14px",
     color: "var(--text)",
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: 18,
     outline: "none",
   },
@@ -79,7 +79,7 @@ const s = {
     background: "var(--accent)",
     color: "#0f0e11",
     fontWeight: 600,
-    fontSize: 18,
+    fontSize: 15,
     marginTop: 4,
     transition: "opacity 0.2s",
   },
@@ -102,10 +102,9 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Se già autenticato, vai alla dashboard
+  // Se già autenticato, reindirizza direttamente alla dashboard
   if (localStorage.getItem("token")) {
-    navigate("/dashboard");
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
 
   async function handleSubmit(e) {
