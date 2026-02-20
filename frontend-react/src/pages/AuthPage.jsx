@@ -9,6 +9,7 @@ export default function AuthPage() {
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const isMobile = window.innerWidth < 900;
 
   if (localStorage.getItem("token")) return <Navigate to="/dashboard" replace />;
 
@@ -30,22 +31,21 @@ export default function AuthPage() {
     <div style={{
       minHeight: "100vh",
       display: "flex",
+      flexDirection: isMobile ? "column" : "row",
       background: "radial-gradient(ellipse 90% 70% at 50% -10%, #1a1040 0%, var(--bg) 65%)",
     }}>
       {/* Left decorative panel */}
       <div style={{
         flex: 1,
-        display: "flex",
+        display: isMobile ? "none" : "flex",
         flexDirection: "column",
         justifyContent: "center",
-        padding: "80px 64px",
-        
-        "@media(min-width:900px)": { display: "flex" },
+        padding: isMobile ? "40px 24px" : "80px 64px",
       }} className="fade-in">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.15em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 24 }}>
           ✦ Flashly
         </div>
-        <div style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.1, marginBottom: 20, color: "var(--text)" }}>
+        <div style={{ fontSize: isMobile ? 36 : 52, fontWeight: 900, lineHeight: 1.1, marginBottom: 20, color: "var(--text)" }}>
           Studia meglio.<br />
           <span style={{ background: "linear-gradient(135deg,var(--accent),var(--accent2))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             Ricorda di più.
@@ -59,15 +59,16 @@ export default function AuthPage() {
       {/* Right form panel */}
       <div style={{
         width: "100%",
-        maxWidth: 480,
+        maxWidth: isMobile ? "100%" : 480,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 32,
-        borderLeft: "1px solid var(--border)",
+        padding: isMobile ? 24 : 32,
+        borderLeft: isMobile ? "none" : "1px solid var(--border)",
+        borderTop: isMobile ? "1px solid var(--border)" : "none",
         background: "var(--surface)",
       }}>
-        <div className="fade-up" style={{ width: "100%", maxWidth: 380 }}>
+        <div className="fade-up" style={{ width: "100%", maxWidth: isMobile ? "100%" : 380 }}>
           {/* Logo mobile */}
           <div style={{ fontSize: 28, fontWeight: 900, color: "var(--accent)", marginBottom: 8, letterSpacing: "-0.5px" }}>
             ✦ Flashly
@@ -124,7 +125,9 @@ export default function AuthPage() {
                   style={{
                     width: "100%", background: "var(--surface2)",
                     border: "1px solid var(--border)", borderRadius: "var(--radiusSm)",
-                    padding: "14px 16px", color: "var(--text)", fontSize: 16,
+                    padding: isMobile ? "16px 18px" : "14px 16px",
+                    color: "var(--text)",
+                    fontSize: 16,
                     outline: "none", fontWeight: 500, transition: "border-color 0.2s, box-shadow 0.2s",
                   }}
                   type={type} placeholder={ph} value={val}
@@ -138,7 +141,7 @@ export default function AuthPage() {
               type="submit"
               disabled={loading}
               style={{
-                width: "100%", padding: "15px",
+                width: "100%", padding: isMobile ? "18px" : "15px",
                 borderRadius: "var(--radiusSm)",
                 background: loading
                   ? "var(--surface3)"
