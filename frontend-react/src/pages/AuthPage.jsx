@@ -40,7 +40,7 @@ export default function AuthPage() {
         display: isMobile ? "none" : "flex",
         flexDirection: "column",
         justifyContent: "center",
-        padding: isMobile ? "40px 24px" : "80px 64px",
+        padding: isMobile ? "40px 25px" : "80px 64px",
       }} className="fade-in">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.15em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 24 }}>
           ✦ Flashly
