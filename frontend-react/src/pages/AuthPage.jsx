@@ -39,7 +39,7 @@ export default function AuthPage() {
         flexDirection: "column",
         justifyContent: "center",
         padding: "80px 64px",
-        display: "none",
+        
         "@media(min-width:900px)": { display: "flex" },
       }} className="fade-in">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.15em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 24 }}>
