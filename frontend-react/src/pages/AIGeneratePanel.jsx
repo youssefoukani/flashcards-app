@@ -11,6 +11,7 @@ const progressCSS = `
 
 export default function AIGeneratePanel({ folderId, onSaved }) {
   const [open, setOpen]         = useState(false);
+  const isMobile = window.innerWidth < 900;
   const [topic, setTopic]       = useState("");
   const [count, setCount]       = useState(5);
   const [loading, setLoading]   = useState(false);
@@ -86,7 +87,13 @@ export default function AIGeneratePanel({ folderId, onSaved }) {
             {ok    && <Alert type="success">{ok}</Alert>}
 
             {/* Form */}
-            <form onSubmit={handleGenerate} style={{ display: "flex", gap: 12, alignItems: "flex-end", marginBottom: style ? 16 : 0 }}>
+            <form onSubmit={handleGenerate} style={{
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              gap: 12,
+              alignItems: isMobile ? "stretch" : "flex-end",
+              marginBottom: style ? 16 : 0
+            }}>
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted)" }}>Argomento</div>
                 <input
@@ -96,6 +103,7 @@ export default function AIGeneratePanel({ folderId, onSaved }) {
                     borderRadius: "var(--radiusSm)", padding: "13px 16px",
                     color: "var(--text)", fontSize: 15, fontWeight: 500, outline: "none",
                     transition: "border-color 0.2s, box-shadow 0.2s",
+                    width: isMobile ? "100%" : "auto",
                   }}
                   placeholder="es: Teorema di Bayes, Reti neurali, Fotosintesi…"
                   value={topic} onChange={e => setTopic(e.target.value)} disabled={loading}
@@ -109,7 +117,7 @@ export default function AIGeneratePanel({ folderId, onSaved }) {
                     background: "var(--surface2)", border: "1px solid var(--border)",
                     borderRadius: "var(--radiusSm)", padding: "13px 14px",
                     color: "var(--text)", fontSize: 15, fontWeight: 600, outline: "none",
-                    cursor: "pointer", width: 72, transition: "border-color 0.2s",
+                    cursor: "pointer", width: isMobile ? "100%" : 72,
                   }}
                   value={count} onChange={e => setCount(Number(e.target.value))} disabled={loading}
                 >
@@ -125,8 +133,13 @@ export default function AIGeneratePanel({ folderId, onSaved }) {
                     ? "var(--surface3)"
                     : "linear-gradient(135deg,var(--accent),#9b59ff)",
                   color: loading || !topic.trim() ? "var(--muted)" : "#fff",
-                  borderRadius: "var(--radiusSm)", padding: "13px 24px",
-                  fontWeight: 800, fontSize: 15, whiteSpace: "nowrap",
+                  borderRadius: "var(--radiusSm)",
+                  padding: isMobile ? "16px 0" : "13px 24px",
+                  fontWeight: 800,
+                  fontSize: 15,
+                  whiteSpace: "nowrap",
+                  width: isMobile ? "100%" : "auto",
+                  textAlign: "center",
                   transition: "opacity 0.2s",
                 }}
               >{loading ? "Generazione…" : "✦ Genera"}</button>
