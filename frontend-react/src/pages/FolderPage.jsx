@@ -189,10 +189,18 @@ export default function FolderPage() {
 
         {/* AI Panel */}
         {isMember && (
-          <AIGeneratePanel folderId={id} onSaved={(nc) => {
-            setCards(p => [...p, ...nc]);
-            flash(`✦ ${nc.length} flashcard AI aggiunte!`);
-          }} />
+          <div style={{
+            marginBottom: 32,
+            background: isMobile ? "var(--surface)" : "transparent",
+            border: isMobile ? "1px solid var(--border)" : "none",
+            borderRadius: isMobile ? "var(--radius)" : 0,
+            padding: isMobile ? "18px" : 0
+          }}>
+            <AIGeneratePanel folderId={id} onSaved={(nc) => {
+              setCards(p => [...p, ...nc]);
+              flash(`✦ ${nc.length} flashcard AI aggiunte!`);
+            }} />
+          </div>
         )}
 
         {/* Add form */}
@@ -300,29 +308,64 @@ export default function FolderPage() {
                     </button>
 
                     {isMember && (
-                      <>
+                      <div style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: 12,
+                        marginTop: isMobile ? 8 : 0
+                      }}>
                         <button
                           title="Modifica"
                           onClick={() => isEdit ? setEditing(null) : setEditing({ id: cardId, front: c.front, back: c.back })}
                           style={{
-                            background: "transparent", border: "none", cursor: "pointer",
-                            padding: "6px 8px", borderRadius: 8, fontSize: 16,
+                            background: isMobile ? "var(--surface2)" : "transparent",
+                            border: isMobile ? "1px solid var(--border)" : "none",
+                            cursor: "pointer",
+                            padding: isMobile ? "10px" : "6px 8px",
+                            borderRadius: 8,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: isMobile ? 42 : "auto",
+                            height: isMobile ? 42 : "auto",
                             color: isEdit ? "var(--accent)" : "var(--muted)",
-                            transition: "color 0.15s",
                           }}
-                        >✏️</button>
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9"/>
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                          </svg>
+                        </button>
+
                         <button
                           title={isConfirm ? "Conferma eliminazione" : "Elimina"}
                           onClick={() => handleDelete(cardId)}
                           onMouseLeave={() => { if (confirmDel === cardId) setConfirmDel(null); }}
                           style={{
-                            background: "transparent", border: "none", cursor: "pointer",
-                            padding: "6px 8px", borderRadius: 8, fontSize: 16,
+                            background: isMobile ? "var(--surface2)" : "transparent",
+                            border: isMobile ? "1px solid var(--border)" : "none",
+                            cursor: "pointer",
+                            padding: isMobile ? "10px" : "6px 8px",
+                            borderRadius: 8,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: isMobile ? 42 : "auto",
+                            height: isMobile ? 42 : "auto",
                             color: isConfirm ? "#ff8096" : "var(--muted)",
-                            transition: "color 0.15s",
                           }}
-                        >{isConfirm ? "⚠" : "🗑"}</button>
-                      </>
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14H6L5 6"/>
+                            <path d="M10 11v6"/>
+                            <path d="M14 11v6"/>
+                            <path d="M9 6V4h6v2"/>
+                          </svg>
+                        </button>
+                      </div>
                     )}
                   </div>
 
