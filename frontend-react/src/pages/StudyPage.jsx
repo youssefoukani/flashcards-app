@@ -179,7 +179,7 @@ export default function StudyPage() {
             {/* Flip card */}
             <div
               style={{
-                width: "100%", maxWidth: 580, height: 300,
+                width: "100%", maxWidth: 580, minHeight: 300, maxHeight: 500,
                 perspective: 1200, marginTop: 28, marginBottom: 32,
                 cursor: transitioning ? "wait" : "pointer",
                 opacity: transitioning ? 0.5 : 1,
@@ -188,7 +188,7 @@ export default function StudyPage() {
               onClick={() => !transitioning && setFlipped(f => !f)}
             >
               <div style={{
-                width: "100%", height: "100%", position: "relative",
+                width: "100%", height: "100%", minHeight: 300, position: "relative",
                 transformStyle: "preserve-3d",
                 transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
                 transition: "transform 0.5s cubic-bezier(0.4,0,0.2,1)",
@@ -206,12 +206,14 @@ export default function StudyPage() {
                     WebkitBackfaceVisibility: "hidden",
                     transform: isBack ? "rotateY(180deg)" : "none",
                     boxShadow: isBack ? "var(--glow)" : "var(--shadow)",
+                    overflow: "hidden",
                   }}>
                     <div style={{
                       fontSize: 10, fontWeight: 700, letterSpacing: "0.15em",
                       textTransform: "uppercase",
                       color: isBack ? "var(--accent)" : "var(--muted)",
                       marginBottom: 16,
+                      flexShrink: 0,  
                     }}>
                       {isBack ? "✦ Risposta" : "Domanda"}
                     </div>
@@ -219,6 +221,10 @@ export default function StudyPage() {
                       fontSize: 22, fontWeight: 700, textAlign: "center",
                       lineHeight: 1.5,
                       color: isBack ? "var(--text)" : "var(--text)",
+                      overflowY: "auto",          // ← aggiungi: scroll se troppo lungo
+                      maxHeight: "100%",          // ← aggiungi
+                      wordBreak: "break-word",    // ← aggiungi: spezza parole lunghissime
+                      paddingRight: 4,            // ← piccolo offset per la scrollbar
                     }}>
                       {isBack ? current?.back : current?.front}
                     </div>
